@@ -284,9 +284,24 @@ export default function App() {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      setAuthError(
-        err instanceof Error ? err.message : 'Não foi possível concluir o login com Google.'
-      );
+      const code =
+        typeof err === 'object' && err !== null && 'code' in err
+          ? String((err as { code?: unknown }).code)
+          : '';
+      if (code === 'auth/unauthorized-domain') {
+        const host = typeof window !== 'undefined' ? window.location.hostname : 'seu domínio';
+        setAuthError(
+          `Domínio "${host}" ainda não está autorizado no Firebase Authentication. Adicione-o em Firebase Console → Authentication → Settings → Authorized domains.`
+        );
+      } else if (code === 'auth/popup-blocked') {
+        setAuthError('O navegador bloqueou a janela de login do Google. Permita pop-ups para este site e tente novamente.');
+      } else if (code === 'auth/popup-closed-by-user') {
+        setAuthError('Login cancelado antes da conclusão.');
+      } else {
+        setAuthError(
+          err instanceof Error ? err.message : 'Não foi possível concluir o login com Google.'
+        );
+      }
     }
   };
 
