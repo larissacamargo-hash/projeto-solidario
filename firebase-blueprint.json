@@ -1,0 +1,308 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "Equipamento ou item tecnológico disponível no estoque do Projeto Solidário Tech.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Identificador único do item no estoque."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID do coordenador responsável pelo registro."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Nome ou modelo do equipamento."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Notebooks & PCs",
+            "Periféricos",
+            "Smartphones & Tablets",
+            "Redes & Cabos",
+            "Componentes & Peças",
+            "Outros"
+          ],
+          "description": "Categoria tecnológica do item."
+        },
+        "condition": {
+          "type": "string",
+          "enum": [
+            "Novo",
+            "Revisado / Funcional",
+            "Para Reparo"
+          ],
+          "description": "Estado de conservação e prontidão do item."
+        },
+        "availableQty": {
+          "type": "integer",
+          "description": "Quantidade atualmente disponível para distribuição."
+        },
+        "totalReceived": {
+          "type": "integer",
+          "description": "Total acumulado recebido deste item."
+        },
+        "totalDistributed": {
+          "type": "integer",
+          "description": "Total acumulado distribuído deste item."
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Local de armazenamento ou bancada de triagem."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data/hora de criação no servidor."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data/hora da última atualização no servidor."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "category",
+        "condition",
+        "availableQty",
+        "totalReceived",
+        "totalDistributed",
+        "location",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Donation": {
+      "title": "Donation",
+      "description": "Registro individual de doação recebida pelo projeto.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Identificador único da doação."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID do coordenador responsável."
+        },
+        "inventoryItemId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Referência ao item correspondente no estoque."
+        },
+        "itemName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Nome do item doado."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Notebooks & PCs",
+            "Periféricos",
+            "Smartphones & Tablets",
+            "Redes & Cabos",
+            "Componentes & Peças",
+            "Outros"
+          ],
+          "description": "Categoria do item doado."
+        },
+        "condition": {
+          "type": "string",
+          "enum": [
+            "Novo",
+            "Revisado / Funcional",
+            "Para Reparo"
+          ],
+          "description": "Condição no momento do recebimento."
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Quantidade de unidades recebidas."
+        },
+        "donorName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Nome do doador ou empresa parceira."
+        },
+        "receivedDate": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "minLength": 10,
+          "maxLength": 10,
+          "description": "Data do recebimento no formato YYYY-MM-DD."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Observações técnicas ou logísticas."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Carimbo temporal do servidor."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "inventoryItemId",
+        "itemName",
+        "category",
+        "condition",
+        "quantity",
+        "donorName",
+        "receivedDate",
+        "notes",
+        "createdAt"
+      ]
+    },
+    "Distribution": {
+      "title": "Distribution",
+      "description": "Registro de saída e entrega de equipamentos para beneficiários.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Identificador único da distribuição."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID do coordenador responsável."
+        },
+        "inventoryItemId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Referência ao item no estoque."
+        },
+        "itemName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Nome do equipamento entregue."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Notebooks & PCs",
+            "Periféricos",
+            "Smartphones & Tablets",
+            "Redes & Cabos",
+            "Componentes & Peças",
+            "Outros"
+          ],
+          "description": "Categoria do item entregue."
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Quantidade entregue."
+        },
+        "recipientName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120,
+          "description": "Nome do beneficiário, estudante ou instituição."
+        },
+        "recipientType": {
+          "type": "string",
+          "enum": [
+            "Estudante",
+            "Escola Pública",
+            "ONG / Projeto Social",
+            "Família"
+          ],
+          "description": "Perfil do beneficiário."
+        },
+        "responsiblePerson": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Voluntário ou responsável pela entrega."
+        },
+        "distributedDate": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "minLength": 10,
+          "maxLength": 10,
+          "description": "Data da distribuição no formato YYYY-MM-DD."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Observações sobre a entrega ou termo de recebimento."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Carimbo temporal do servidor."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "inventoryItemId",
+        "itemName",
+        "category",
+        "quantity",
+        "recipientName",
+        "recipientType",
+        "responsiblePerson",
+        "distributedDate",
+        "notes",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/inventory/{itemId}": {
+      "schema": {
+        "$ref": "#/entities/InventoryItem"
+      },
+      "description": "Controle de itens disponíveis e saldo acumulado por equipamento."
+    },
+    "/donations/{donationId}": {
+      "schema": {
+        "$ref": "#/entities/Donation"
+      },
+      "description": "Histórico de doações recebidas vinculadas ao estoque."
+    },
+    "/distributions/{distributionId}": {
+      "schema": {
+        "$ref": "#/entities/Distribution"
+      },
+      "description": "Registro de saídas e distribuições aos beneficiários."
+    }
+  }
+}

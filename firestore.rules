@@ -1,0 +1,213 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidCategory(cat) {
+      return cat in [
+        'Notebooks & PCs',
+        'Periféricos',
+        'Smartphones & Tablets',
+        'Redes & Cabos',
+        'Componentes & Peças',
+        'Outros'
+      ];
+    }
+
+    function isValidCondition(cond) {
+      return cond in [
+        'Novo',
+        'Revisado / Funcional',
+        'Para Reparo'
+      ];
+    }
+
+    function isValidRecipientType(t) {
+      return t in [
+        'Estudante',
+        'Escola Pública',
+        'ONG / Projeto Social',
+        'Família'
+      ];
+    }
+
+    function isValidDateString(d) {
+      return d is string && d.size() == 10 && d.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
+    // Entity Blueprint Validators
+    function isValidInventoryItem(data, itemId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'name', 'category', 'condition',
+        'availableQty', 'totalReceived', 'totalDistributed',
+        'location', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'id', 'ownerId', 'name', 'category', 'condition',
+        'availableQty', 'totalReceived', 'totalDistributed',
+        'location', 'createdAt', 'updatedAt'
+      ])
+      && data.id == itemId
+      && isValidId(data.id)
+      && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId.size() <= 128
+      && data.name is string && data.name.size() >= 2 && data.name.size() <= 120
+      && isValidCategory(data.category)
+      && isValidCondition(data.condition)
+      && data.availableQty is int && data.availableQty >= 0 && data.availableQty <= 1000000
+      && data.totalReceived is int && data.totalReceived >= 0 && data.totalReceived <= 10000000
+      && data.totalDistributed is int && data.totalDistributed >= 0 && data.totalDistributed <= data.totalReceived
+      && data.location is string && data.location.size() >= 1 && data.location.size() <= 80
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidDonation(data, donationId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'inventoryItemId', 'itemName', 'category',
+        'condition', 'quantity', 'donorName', 'receivedDate', 'notes', 'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'id', 'ownerId', 'inventoryItemId', 'itemName', 'category',
+        'condition', 'quantity', 'donorName', 'receivedDate', 'notes', 'createdAt'
+      ])
+      && data.id == donationId
+      && isValidId(data.id)
+      && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId.size() <= 128
+      && isValidId(data.inventoryItemId)
+      && data.itemName is string && data.itemName.size() >= 2 && data.itemName.size() <= 120
+      && isValidCategory(data.category)
+      && isValidCondition(data.condition)
+      && data.quantity is int && data.quantity >= 1 && data.quantity <= 100000
+      && data.donorName is string && data.donorName.size() >= 2 && data.donorName.size() <= 120
+      && isValidDateString(data.receivedDate)
+      && data.notes is string && data.notes.size() <= 500
+      && data.createdAt is timestamp;
+    }
+
+    function isValidDistribution(data, distributionId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'inventoryItemId', 'itemName', 'category',
+        'quantity', 'recipientName', 'recipientType', 'responsiblePerson',
+        'distributedDate', 'notes', 'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'id', 'ownerId', 'inventoryItemId', 'itemName', 'category',
+        'quantity', 'recipientName', 'recipientType', 'responsiblePerson',
+        'distributedDate', 'notes', 'createdAt'
+      ])
+      && data.id == distributionId
+      && isValidId(data.id)
+      && data.ownerId is string && data.ownerId == request.auth.uid && data.ownerId.size() <= 128
+      && isValidId(data.inventoryItemId)
+      && data.itemName is string && data.itemName.size() >= 2 && data.itemName.size() <= 120
+      && isValidCategory(data.category)
+      && data.quantity is int && data.quantity >= 1 && data.quantity <= 100000
+      && data.recipientName is string && data.recipientName.size() >= 2 && data.recipientName.size() <= 120
+      && isValidRecipientType(data.recipientType)
+      && data.responsiblePerson is string && data.responsiblePerson.size() >= 2 && data.responsiblePerson.size() <= 100
+      && isValidDateString(data.distributedDate)
+      && data.notes is string && data.notes.size() <= 500
+      && data.createdAt is timestamp;
+    }
+
+    // /inventory/{itemId}
+    match /inventory/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isVerified()
+        && isValidId(itemId)
+        && isValidInventoryItem(incoming(), itemId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerified()
+        && isValidId(itemId)
+        && isValidInventoryItem(incoming(), itemId)
+        && existing().ownerId == request.auth.uid
+        && incoming().ownerId == existing().ownerId
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: ReceiveDonation
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['availableQty', 'totalReceived', 'updatedAt'])
+            && incoming().availableQty > existing().availableQty
+            && incoming().totalReceived > existing().totalReceived
+            && incoming().totalDistributed == existing().totalDistributed
+          ) ||
+          // Action: DistributeItem
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['availableQty', 'totalDistributed', 'updatedAt'])
+            && incoming().availableQty < existing().availableQty
+            && incoming().totalDistributed > existing().totalDistributed
+            && incoming().totalReceived == existing().totalReceived
+          ) ||
+          // Action: UpdateDetails
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'condition', 'location', 'updatedAt'])
+          )
+        );
+
+      allow delete: if isVerified() && isValidId(itemId) && existing().ownerId == request.auth.uid;
+    }
+
+    // /donations/{donationId}
+    match /donations/{donationId} {
+      allow get: if isSignedIn() && isValidId(donationId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isVerified()
+        && isValidId(donationId)
+        && isValidDonation(incoming(), donationId)
+        && incoming().createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/inventory/$(incoming().inventoryItemId))
+        && getAfter(/databases/$(database)/documents/inventory/$(incoming().inventoryItemId)).data.ownerId == request.auth.uid;
+
+      allow update: if false;
+      allow delete: if isVerified() && isValidId(donationId) && existing().ownerId == request.auth.uid;
+    }
+
+    // /distributions/{distributionId}
+    match /distributions/{distributionId} {
+      allow get: if isSignedIn() && isValidId(distributionId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isVerified()
+        && isValidId(distributionId)
+        && isValidDistribution(incoming(), distributionId)
+        && incoming().createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/inventory/$(incoming().inventoryItemId))
+        && getAfter(/databases/$(database)/documents/inventory/$(incoming().inventoryItemId)).data.ownerId == request.auth.uid;
+
+      allow update: if false;
+      allow delete: if isVerified() && isValidId(distributionId) && existing().ownerId == request.auth.uid;
+    }
+  }
+}

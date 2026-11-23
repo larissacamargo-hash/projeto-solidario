@@ -1,0 +1,6 @@
+{
+  "name": "Projeto Solidário Tech",
+  "description": "Sistema de gerenciamento de doações tecnológicas com cadastro, controle de estoque disponível, registro de distribuição e gráficos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
